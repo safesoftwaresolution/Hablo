@@ -1,0 +1,35 @@
+{
+  "name": "hablo",
+  "version": "0.1.0",
+  "description": "Teclado de voz con IA para escritorio: habla y el texto pulido aparece donde tengas el cursor.",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "app.hablo.desktop",
+    "productName": "Hablo",
+    "files": [
+      "main.js",
+      "preload.js",
+      "src/**",
+      "renderer/**"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "asarUnpack": [
+      "node_modules/uiohook-napi/**"
+    ],
+    "npmRebuild": false
+  },
+  "devDependencies": {
+    "electron": "^44.9.3",
+    "electron-builder": "^26.15.3"
+  },
+  "dependencies": {
+    "uiohook-napi": "^1.5.5"
+  }
+}

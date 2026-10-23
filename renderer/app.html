@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hablo</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a6cff"/><stop offset="1" stop-color="#ff7d9a"/></linearGradient></defs></svg>
+<div class="drag"></div>
+
+<aside>
+  <div class="brand"><div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/></svg></div><span class="nm">Hablo</span></div>
+  <nav id="nav">
+    <button data-p="home" class="on"><svg viewBox="0 0 24 24"><path d="M3 11 12 3l9 8M5 9.5V20h5v-6h4v6h5V9.5"/></svg><span>Inicio</span></button>
+    <button data-p="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Historial</span></button>
+    <button data-p="dict"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>Diccionario</span></button>
+    <button data-p="style"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.7-.8 1.4-1.8-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="11" cy="7.5" r="1"/><circle cx="15.5" cy="8.5" r="1"/></svg><span>Estilo</span></button>
+    <button data-p="settings"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span>Ajustes</span></button>
+  </nav>
+  <div class="side-foot" id="sideStats"></div>
+</aside>
+
+<main id="main">
+  <div id="banner" class="banner" hidden></div>
+
+  <!-- INICIO -->
+  <section id="p-home">
+    <div class="head"><div><div class="muted" id="greet"></div><h1>Tu voz, convertida en texto pulido</h1></div></div>
+    <div id="setupHint" class="hint" hidden><span>Falta conectar tu proveedor de IA.</span> <a href="#" data-go="settings">Configurar ahora →</a></div>
+    <div class="bento">
+      <div class="card hero">
+        <div class="wave" aria-hidden="true"></div>
+        <h1>Habla. Hablo escribe.</h1>
+        <p>Mantén pulsado el atajo y habla, o toca una vez para dictar con las manos libres. El texto aparece donde esté tu cursor, en cualquier app.</p>
+        <div class="shortcuts">
+          <div class="sc"><div class="keys" id="kDictate"></div><div class="t">Dictar</div><div class="d">Quita muletillas, se autocorrige y da formato.</div></div>
+          <div class="sc"><div class="keys" id="kAsk"></div><div class="t">Preguntar o editar</div><div class="d">Edita la selección con tu voz o responde preguntas.</div></div>
+          <div class="sc"><div class="keys" id="kTranslate"></div><div class="t">Traducir</div><div class="d">Hablas en un idioma, escribe en <b id="trLang"></b>.</div></div>
+        </div>
+      </div>
+      <div class="card stat"><div class="n grad-text" id="sWords">0</div><div class="l">palabras dictadas</div></div>
+      <div class="card stat"><div class="n" id="sToday">0</div><div class="l">palabras hoy</div></div>
+      <div class="card stat"><div class="n" id="sWpm">—</div><div class="l">palabras por minuto</div></div>
+      <div class="card chart"><h3>Actividad de la semana</h3><div class="muted small">Palabras por día</div><div class="bars" id="bars"></div></div>
+      <div class="card saved"><h3>Tiempo ahorrado</h3><div class="muted small">frente a teclear a 45 ppm</div><div class="n grad-text" id="sSaved" style="font-size:38px;font-weight:750;margin-top:18px">0 min</div></div>
+      <div class="card playground"><h3>Pruébalo aquí</h3><div class="muted small">Haz clic en el recuadro y usa tu atajo de dictado.</div><textarea class="play" id="playground" placeholder="El texto dictado aparecerá aquí…"></textarea></div>
+    </div>
+    <h2>Recientes</h2>
+    <div id="recent"></div>
+  </section>
+
+  <!-- HISTORIAL -->
+  <section id="p-history" hidden>
+    <div class="head"><div><h1>Historial</h1><div class="muted">Guardado solo en este equipo.</div></div>
+      <div class="row"><input id="histFilter" placeholder="Buscar…" style="width:220px"><button class="btn sm danger" id="clearHist">Borrar todo</button></div></div>
+    <div id="histList"></div>
+  </section>
+
+  <!-- DICCIONARIO -->
+  <section id="p-dict" hidden>
+    <div class="head"><div><h1>Diccionario</h1><div class="muted">Nombres, marcas y términos que deben escribirse exactamente así.</div></div></div>
+    <div class="card">
+      <div class="row"><input id="dictInput" placeholder="Laravel, Inertia, Cupo… (separa con comas)"><button class="btn primary" id="dictAdd">Añadir</button></div>
+      <div class="chips" id="dictList"></div>
+    </div>
+  </section>
+
+  <!-- ESTILO -->
+  <section id="p-style" hidden>
+    <div class="head"><div><h1>Estilo e idioma</h1><div class="muted">Cómo suena lo que escribes.</div></div></div>
+    <div class="card">
+      <h3>Tono por defecto</h3><div class="muted small">Se usa cuando ninguna regla de aplicación coincide.</div>
+      <div class="seg" id="toneSeg"></div>
+      <div class="opt" style="margin-top:16px"><div><b>Pulir con IA</b><p>Quita muletillas, autocorrige y da formato. Apagado, se pega la transcripción tal cual.</p></div><label class="sw"><input type="checkbox" id="cleanup"><i></i></label></div>
+    </div>
+    <div class="card">
+      <h3>Tono por aplicación</h3><div class="muted small">Si el programa o el título de la ventana contiene el texto, se aplica ese tono.</div>
+      <div id="rules"></div>
+      <button class="btn sm" id="addRule" style="margin-top:14px">+ Añadir regla</button>
+    </div>
+    <div class="card">
+      <h3>Idioma</h3>
+      <label class="field"><span>Idioma del dictado</span><select id="language"></select></label>
+      <div class="muted small" style="margin-top:6px">En automático detecta el idioma y admite mezclar varios en la misma frase.</div>
+      <label class="field"><span>Idioma de destino al traducir</span><input id="trTarget" placeholder="English"></label>
+    </div>
+    <div class="card">
+      <h3>Sobre ti</h3><div class="muted small">Hablo lo usa para escribir como tú.</div>
+      <textarea id="aboutMe" rows="4" style="margin-top:10px" placeholder="Ej.: Soy desarrollador en Colombia. Escribo en español neutro, directo, con 'tú'. Evito signos de exclamación."></textarea>
+    </div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section id="p-settings" hidden>
+    <div class="head"><div><h1>Ajustes</h1><div class="muted">Proveedor, atajos y audio.</div></div></div>
+    <div class="card">
+      <h3>Proveedor de IA</h3>
+      <div class="muted small">Cualquier API compatible con OpenAI. El audio va directo al proveedor con tu clave; Hablo no tiene servidores.</div>
+      <div class="provider-pick">
+        <button data-preset="openai"><b>OpenAI</b><span>gpt-4o-mini-transcribe</span></button>
+        <button data-preset="groq"><b>Groq</b><span>Whisper turbo · muy rápido</span></button>
+      </div>
+      <label class="field"><span>URL base</span><input id="baseUrl"></label>
+      <div class="row" style="gap:12px"><label class="field" style="flex:1"><span>Modelo de transcripción</span><input id="sttModel"></label><label class="field" style="flex:1"><span>Modelo de texto</span><input id="chatModel"></label></div>
+      <label class="field"><span>API key <b id="keyState"></b></span>
+        <div class="row"><input id="apiKey" type="password" placeholder="sk-…" autocomplete="off"><button class="btn primary" id="saveKey">Guardar</button></div></label>
+      <div class="row" style="margin-top:14px"><button class="btn sm" id="testAI">Probar conexión</button><span id="testRes" class="small"></span></div>
+    </div>
+    <div class="card">
+      <h3>Atajos</h3><div class="muted small" id="hkMode"></div>
+      <div class="hk-row"><div><b>Dictar</b><div class="muted small">Mantén pulsado para hablar · toca una vez para manos libres</div></div><button class="keybtn" data-hk="dictate"></button></div>
+      <div class="hk-row"><div><b>Preguntar o editar</b><div class="muted small">Con texto seleccionado lo edita; sin selección responde</div></div><button class="keybtn" data-hk="ask"></button></div>
+      <div class="hk-row"><div><b>Traducir</b><div class="muted small">Dicta en tu idioma, escribe en el idioma de destino</div></div><button class="keybtn" data-hk="translate"></button></div>
+      <div class="muted small">Esc cancela una grabación. Haz clic en un atajo y pulsa la nueva combinación.</div>
+    </div>
+    <div class="card">
+      <h3>Audio</h3>
+      <label class="field"><span>Micrófono</span><select id="mic"></select></label>
+      <div class="row between" style="margin-top:12px"><span class="muted small" id="micHint">Prueba tu micrófono y habla.</span><button class="btn sm" id="micTest">Probar</button></div>
+      <div class="meter"><i id="meterFill"></i></div>
+      <div class="opt" style="margin-top:14px"><div><b>Modo susurro</b><p>Amplifica la voz baja para dictar sin molestar.</p></div><label class="sw"><input type="checkbox" id="whisper"><i></i></label></div>
+      <div class="opt"><div><b>Sonidos</b><p>Un tono breve al empezar y terminar.</p></div><label class="sw"><input type="checkbox" id="sound"><i></i></label></div>
+    </div>
+    <div class="card">
+      <div class="opt"><div><b>Iniciar con Windows</b><p>Arranca en segundo plano, listo para dictar.</p></div><label class="sw"><input type="checkbox" id="autostart"><i></i></label></div>
+      <div class="opt"><div><b>Volver a ver la bienvenida</b><p>Repite la guía de configuración inicial.</p></div><button class="btn sm" id="redoOb">Abrir</button></div>
+    </div>
+  </section>
+</main>
+
+<!-- ONBOARDING -->
+<div class="ob" id="ob" hidden>
+  <div class="ob-card">
+    <div class="dots" id="obDots"></div>
+    <div id="obBody"></div>
+    <div class="ob-foot"><button class="btn sm" id="obBack">Atrás</button><button class="btn primary" id="obNext">Continuar</button></div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+<script src="app.js"></script>
+</body>
+</html>
