@@ -23,7 +23,10 @@
     "asarUnpack": [
       "node_modules/uiohook-napi/**"
     ],
-    "npmRebuild": false
+    "npmRebuild": false,
+    "nsis": {
+      "include": "build/installer.nsh"
+    }
   },
   "devDependencies": {
     "electron": "^44.9.3",
