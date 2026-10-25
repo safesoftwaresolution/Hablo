@@ -21,6 +21,22 @@ async function fail(res) {
   throw new Error(`API ${res.status}: ${msg.slice(0, 300)}`);
 }
 
+// Node lanza "fetch failed" a secas; el motivo real (DNS, TLS, reset…) está en error.cause.
+async function request(url, init) {
+  try {
+    return await fetch(url, init);
+  } catch (e) {
+    // Reintento con la red de Chromium (proxy y certificados del sistema).
+    try {
+      return await require('electron').net.fetch(url, init);
+    } catch (e2) {
+      const c = e.cause;
+      const detail = c ? [c.code, c.message].filter(Boolean).join(' ') : e.message;
+      throw new Error(`No se pudo conectar con ${new URL(url).host}: ${detail} / ${e2.message}`);
+    }
+  }
+}
+
 async function transcribe(buf, mime) {
   const { s, key, base } = cfg();
   const form = new FormData();
@@ -30,14 +46,14 @@ async function transcribe(buf, mime) {
   form.append('response_format', 'json');
   if (s.language && s.language !== 'auto') form.append('language', s.language);
   if (s.dictionary.length) form.append('prompt', 'Vocabulario: ' + s.dictionary.join(', '));
-  const res = await fetch(`${base}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form });
+  const res = await request(`${base}/audio/transcriptions`, { method: 'POST', headers: { Authorization: `Bearer ${key}` }, body: form });
   if (!res.ok) await fail(res);
   return ((await res.json()).text || '').trim();
 }
 
 async function chat(system, user, temperature = 0.2) {
   const { s, key, base } = cfg();
-  const res = await fetch(`${base}/chat/completions`, {
+  const res = await request(`${base}/chat/completions`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
