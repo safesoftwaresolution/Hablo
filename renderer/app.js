@@ -30,6 +30,7 @@ function go(page) {
   $('main').scrollTop = 0;
   if (page === 'home') renderHome();
   if (page === 'history') renderHistory();
+  if (page === 'templates') renderTemplates();
   if (page === 'settings') loadMics();
 }
 $('nav').onclick = (e) => { const b = e.target.closest('button'); if (b) go(b.dataset.p); };
@@ -120,6 +121,28 @@ $('dictInput').onkeydown = (e) => e.key === 'Enter' && addTerms();
 $('dictList').onclick = async (e) => {
   const t = e.target.dataset.del; if (t === undefined) return;
   await save({ dictionary: S.dictionary.filter((x) => x !== t) }); renderDict();
+};
+
+// ---------- plantillas ----------
+function renderTemplates() {
+  $('tplList').innerHTML = S.templates.map((t) => `
+    <div class="card tpl" data-id="${esc(t.id)}">
+      <div class="row"><input data-f="name" value="${esc(t.name)}" placeholder="Nombre que dirás al dictar, ej.: acta de reunión"><button class="icon-btn" data-rmtpl="${esc(t.id)}" title="Borrar">Borrar</button></div>
+      <textarea data-f="structure" rows="5" placeholder="Estructura: apartados o instrucciones, una por línea">${esc(t.structure)}</textarea>
+    </div>`).join('') || '<div class="empty">No hay plantillas. Crea la primera.</div>';
+}
+$('tplList').onchange = async (e) => {
+  const f = e.target.dataset.f; if (!f) return;
+  const id = e.target.closest('.tpl').dataset.id;
+  await save({ templates: S.templates.map((t) => (t.id === id ? { ...t, [f]: e.target.value } : t)) });
+};
+$('tplList').onclick = async (e) => {
+  const id = e.target.dataset.rmtpl; if (!id) return;
+  await save({ templates: S.templates.filter((t) => t.id !== id) }); renderTemplates();
+};
+$('addTpl').onclick = async () => {
+  await save({ templates: [{ id: Date.now().toString(36), name: '', structure: '' }, ...S.templates] }); renderTemplates();
+  $('tplList').querySelector('input')?.focus();
 };
 
 // ---------- estilo ----------

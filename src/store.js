@@ -23,6 +23,14 @@ const DEFAULTS = {
     { match: 'powershell', tone: 'literal' }
   ],
   aboutMe: '',
+  // Se activan al empezar a dictar con su nombre ("acta de reunión, hoy estuvimos…").
+  templates: [
+    { id: 'acta', name: 'acta de reunión', structure: 'Acta de reunión\nFecha:\nAsistentes:\nTemas tratados:\n- \nAcuerdos:\n- \nPendientes (responsable y fecha):\n- ' },
+    { id: 'cliente', name: 'respuesta a cliente', structure: 'Saludo cordial (con el nombre si se dijo)\nAgradecimiento o empatía por su mensaje\nRespuesta o solución clara\nSiguientes pasos\nCierre amable y firma' },
+    { id: 'correo', name: 'correo formal', structure: 'Asunto:\nSaludo formal\nMotivo del correo en una frase\nDetalle breve\nSolicitud o llamada a la acción\nDespedida formal' },
+    { id: 'tareas', name: 'lista de tareas', structure: 'Lista con viñetas, una tarea por línea, empezando con verbo en infinitivo. Añade responsable y fecha si se mencionan.' },
+    { id: 'seguimiento', name: 'mensaje de seguimiento', structure: 'Saludo breve\nRecordatorio de lo hablado\nPróximo paso concreto y fecha\nCierre amable' }
+  ],
   translate: { target: 'English' },
   onboarded: false,
   dictionary: [],

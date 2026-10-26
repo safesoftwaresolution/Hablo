@@ -193,7 +193,11 @@ async function handleAudio({ buffer, mime, ms }) {
     } else {
       const translate = mine.mode === 'translate';
       let text = raw;
-      if (s.cleanup || translate) { showOverlay('processing', translate ? 'Traduciendo…' : 'Puliendo…'); text = await ai.clean(raw, mine.ctx, { translate }); }
+      const template = ai.matchTemplate(raw);
+      if (s.cleanup || translate || template) {
+        showOverlay('processing', translate ? 'Traduciendo…' : template ? `Plantilla: ${template.name}…` : 'Puliendo…');
+        text = await ai.clean(raw, mine.ctx, { translate, template });
+      }
       await win.insert(text);
       store.addHistory({ kind: translate ? 'translation' : 'dictation', raw, text, app: mine.ctx.app || '', ms });
       showOverlay('done', 'Listo');

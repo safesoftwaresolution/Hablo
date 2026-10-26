@@ -73,6 +73,16 @@ function toneFor(ctx) {
   return rule ? rule.tone : s.tone;
 }
 
+const norm = (t) => t.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9ñ\s]/g, ' ').replace(/\s+/g, ' ').trim();
+const escRe = (t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+// Devuelve la plantilla cuyo nombre abre la frase, con o sin "plantilla" delante.
+function matchTemplate(raw) {
+  const text = norm(raw);
+  const byLength = [...(store.getSettings().templates || [])].filter((t) => t.name?.trim()).sort((a, b) => b.name.length - a.name.length);
+  return byLength.find((t) => new RegExp(`^(?:(?:usa |aplica |con )?(?:la )?plantilla (?:de |del )?)?${escRe(norm(t.name))}\\b`).test(text)) || null;
+}
+
 async function clean(raw, ctx, opts = {}) {
   const s = store.getSettings();
   const tone = toneFor(ctx);
@@ -90,6 +100,7 @@ async function clean(raw, ctx, opts = {}) {
     ctx?.app ? `Aplicación donde se escribirá: ${ctx.app}${ctx.title ? ` (${ctx.title})` : ''}.` : '',
     s.dictionary.length ? `Escribe exactamente así estos términos si aparecen: ${s.dictionary.join(', ')}.` : '',
     s.aboutMe ? `Sobre la persona y su estilo de escritura: ${s.aboutMe}` : '',
+    opts.template ? `PLANTILLA «${opts.template.name}»: la persona la pidió al empezar; no escribas esas palabras de activación. Organiza lo que dijo siguiendo esta estructura. No inventes datos: si falta información para un apartado, escribe "[pendiente]". Elimina los apartados que no apliquen en lugar de rellenarlos con relleno.\nEstructura:\n${opts.template.structure}` : '',
     opts.translate ? `Después de pulir, traduce el resultado a ${s.translate.target} con frases naturales para un hablante nativo.` : ''
   ].filter(Boolean).join('\n');
   const out = await chat(system, `<transcript>\n${raw}\n</transcript>`);
@@ -120,4 +131,4 @@ async function test() {
   return out;
 }
 
-module.exports = { transcribe, clean, edit, answer, test };
+module.exports = { transcribe, matchTemplate, clean, edit, answer, test };

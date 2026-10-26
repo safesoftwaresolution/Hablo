@@ -144,6 +144,9 @@ textarea { resize: vertical; }
 .avatar { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; font-weight: 700; font-size: 13px; color: #fff; background: var(--grad); }
 .rule input, .rule select { margin: 0 !important; }
 
+/* plantillas */
+.tpl textarea { margin-top: 10px; }
+
 /* chips & items */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 6px 6px 14px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); font-weight: 500; animation: in .25s both; }
