@@ -1,6 +1,6 @@
 {
   "name": "hablo",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Teclado de voz con IA para escritorio: habla y el texto pulido aparece donde tengas el cursor.",
   "author": "safesoftwaresolution",
   "main": "main.js",

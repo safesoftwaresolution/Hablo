@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('hablo', {
   setSettings: (p) => ipcRenderer.invoke('settings:set', p),
   setApiKey: (k) => ipcRenderer.invoke('apikey:set', k),
   testAI: () => ipcRenderer.invoke('ai:test'),
+  reviewText: (t) => ipcRenderer.invoke('review:run', t),
   getHistory: () => ipcRenderer.invoke('history:get'),
   deleteHistory: (id) => ipcRenderer.invoke('history:delete', id),
   clearHistory: () => ipcRenderer.invoke('history:clear'),

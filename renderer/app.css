@@ -147,6 +147,15 @@ textarea { resize: vertical; }
 /* plantillas */
 .tpl textarea { margin-top: 10px; }
 
+/* revisor */
+.rev { margin-top: 14px; } .rev p { margin: 12px 0 4px; } .rev h3 { margin-top: 16px; }
+.rev ul { margin: 6px 0 0; padding-left: 20px; } .rev li { margin: 6px 0; }
+.rev .txt { margin-top: 8px; white-space: pre-wrap; user-select: text; }
+.lvl { display: inline-block; padding: 5px 12px; border-radius: 999px; font-weight: 650; font-size: 13px; }
+.lvl.ok { background: color-mix(in srgb, var(--ok) 16%, transparent); color: var(--ok); }
+.lvl.mid { background: color-mix(in srgb, var(--a4) 22%, transparent); color: var(--a4); }
+.lvl.hi { background: color-mix(in srgb, var(--danger) 16%, transparent); color: var(--danger); }
+
 /* chips & items */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 6px 6px 14px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); font-weight: 500; animation: in .25s both; }

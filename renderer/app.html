@@ -18,6 +18,7 @@
     <button data-p="history"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Historial</span></button>
     <button data-p="dict"><svg viewBox="0 0 24 24"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/></svg><span>Diccionario</span></button>
     <button data-p="templates"><svg viewBox="0 0 24 24"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Plantillas</span></button>
+    <button data-p="review"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4M8.5 11.5l2 2 3.5-4"/></svg><span>Revisor</span></button>
     <button data-p="style"><svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.7-.8 1.4-1.8-.4-1.2.3-2.2 1.6-2.2H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="11" cy="7.5" r="1"/><circle cx="15.5" cy="8.5" r="1"/></svg><span>Estilo</span></button>
     <button data-p="settings"><svg viewBox="0 0 24 24"><path d="M4 6h10M18 6h2M4 12h2M10 12h10M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="8" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg><span>Ajustes</span></button>
   </nav>
@@ -75,6 +76,17 @@
       <button class="btn primary" id="addTpl">+ Nueva plantilla</button></div>
     <div class="hint"><span>Ejemplo: «<b>acta de reunión</b>, hoy estuvimos con Marta y Luis y acordamos…». Si falta un dato, aparece como [pendiente].</span></div>
     <div id="tplList"></div>
+  </section>
+
+  <!-- REVISOR -->
+  <section id="p-review" hidden>
+    <div class="head"><div><h1>Revisor de texto</h1><div class="muted">Estima si un texto suena a IA, te dice por qué y propone una versión más personal.</div></div></div>
+    <div class="card">
+      <textarea id="revText" rows="9" placeholder="Pega aquí el texto a revisar (mínimo 30 palabras)…"></textarea>
+      <div class="row between" style="margin-top:12px"><span class="muted small" id="revCount">0 palabras</span><button class="btn primary" id="revRun">Analizar</button></div>
+    </div>
+    <div id="revOut"></div>
+    <div class="muted small" style="margin-top:16px">Es una estimación orientativa, no una prueba. Ningún detector de IA es fiable al 100 %: un texto muy pulido o escrito por alguien que no es nativo puede parecer de IA sin serlo. No lo uses para acusar a nadie.</div>
   </section>
 
   <!-- ESTILO -->

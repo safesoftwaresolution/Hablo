@@ -52,7 +52,7 @@ function dayLabel(t) {
 function itemHtml(h) {
   return `<div class="item" data-id="${h.id}">${avatar(h.app || KIND[h.kind])}
     <div class="body"><div class="meta"><span class="tag">${KIND[h.kind] || h.kind}</span><span>${esc(h.app || '')}</span><span>${timeOf(h.at)}</span><span class="sp"></span>
-      <span class="acts"><button class="icon-btn" data-act="copy">Copiar</button><button class="icon-btn" data-act="del">Borrar</button></span></div>
+      <span class="acts"><button class="icon-btn" data-act="copy">Copiar</button><button class="icon-btn" data-act="review">Revisar</button><button class="icon-btn" data-act="del">Borrar</button></span></div>
       <div class="txt">${esc(h.text)}</div>
       ${h.raw && h.raw !== h.text ? `<div class="raw">Lo que dijiste: ${esc(h.raw)}</div>` : ''}</div></div>`;
 }
@@ -101,6 +101,7 @@ document.addEventListener('click', async (e) => {
   const act = e.target.dataset.act; if (!act) return;
   const id = e.target.closest('.item').dataset.id;
   if (act === 'copy') { const h = (await hablo.getHistory()).find((x) => x.id === id); hablo.copy(h.text); toast('Copiado'); }
+  if (act === 'review') { const h = (await hablo.getHistory()).find((x) => x.id === id); $('revText').value = h.text; $('revText').oninput(); $('revOut').innerHTML = ''; go('review'); }
   if (act === 'del') { await hablo.deleteHistory(id); renderHistory(); renderHome(); }
 });
 $('clearHist').onclick = async () => { if (confirm('¿Borrar todo el historial?')) { await hablo.clearHistory(); renderHistory(); renderHome(); } };
@@ -121,6 +122,26 @@ $('dictInput').onkeydown = (e) => e.key === 'Enter' && addTerms();
 $('dictList').onclick = async (e) => {
   const t = e.target.dataset.del; if (t === undefined) return;
   await save({ dictionary: S.dictionary.filter((x) => x !== t) }); renderDict();
+};
+
+// ---------- revisor ----------
+const LEVEL = { baja: ['Probabilidad baja', 'ok'], media: ['Probabilidad media', 'mid'], alta: ['Probabilidad alta', 'hi'] };
+$('revText').oninput = () => { const n = words($('revText').value); $('revCount').textContent = `${n} palabra${n === 1 ? '' : 's'}`; };
+$('revRun').onclick = async () => {
+  const text = $('revText').value.trim(); if (!text) return;
+  $('revRun').disabled = true; $('revRun').textContent = 'Analizando…'; $('revOut').innerHTML = '';
+  const r = await hablo.reviewText(text);
+  $('revRun').disabled = false; $('revRun').textContent = 'Analizar';
+  if (!r.ok) { $('revOut').innerHTML = `<div class="banner" style="margin-top:14px">${esc(r.error)}</div>`; return; }
+  const x = r.result, [label, cls] = LEVEL[x.nivel];
+  $('revOut').innerHTML = `
+    <div class="card rev"><div class="row between wrap"><span class="lvl ${cls}">${label}${x.rango ? ` · ${esc(x.rango)}` : ''}</span></div>
+      <p>${esc(x.resumen)}</p>
+      ${x.senales.length ? `<h3>Señales detectadas</h3><ul>${x.senales.map((s) => `<li><b>${esc(s.patron)}</b>${s.ejemplo ? `<br><span class="muted small">«${esc(s.ejemplo)}»</span>` : ''}</li>`).join('')}</ul>` : ''}
+      ${x.mejoras.length ? `<h3>Cómo mejorarlo</h3><ul>${x.mejoras.map((m) => `<li>${esc(m)}</li>`).join('')}</ul>` : ''}
+    </div>
+    ${x.reescritura ? `<div class="card rev"><div class="row between"><h3>Versión más personal</h3><button class="btn sm" id="revCopy">Copiar</button></div><div class="txt" id="revRewrite">${esc(x.reescritura)}</div></div>` : ''}`;
+  if (x.reescritura) $('revCopy').onclick = () => { hablo.copy(x.reescritura); toast('Copiado'); };
 };
 
 // ---------- plantillas ----------

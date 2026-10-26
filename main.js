@@ -223,6 +223,7 @@ ipcMain.handle('settings:set', (_e, patch) => {
 });
 ipcMain.handle('apikey:set', (_e, key) => { store.setApiKey(key.trim()); return publicSettings(); });
 ipcMain.handle('ai:test', async () => { try { await ai.test(); return { ok: true }; } catch (e) { return { ok: false, error: e.message }; } });
+ipcMain.handle('review:run', async (_e, text) => { try { return { ok: true, result: await ai.review(String(text || '')) }; } catch (e) { return { ok: false, error: e.message }; } });
 ipcMain.handle('history:get', () => store.getHistory());
 ipcMain.handle('history:delete', (_e, id) => store.deleteHistory(id));
 ipcMain.handle('history:clear', () => store.clearHistory());
