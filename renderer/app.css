@@ -147,6 +147,10 @@ textarea { resize: vertical; }
 /* plantillas */
 .tpl textarea { margin-top: 10px; }
 
+/* resumen en el historial */
+.sum { margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: var(--surface-2); border: 1px solid var(--line); }
+.sum p { margin: 4px 0 6px; } .sum ul { margin: 4px 0 8px; padding-left: 20px; } .sum li { margin: 3px 0; }
+
 /* revisor */
 .rev { margin-top: 14px; } .rev p { margin: 12px 0 4px; } .rev h3 { margin-top: 16px; }
 .rev ul { margin: 6px 0 0; padding-left: 20px; } .rev li { margin: 6px 0; }

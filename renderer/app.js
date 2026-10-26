@@ -52,9 +52,9 @@ function dayLabel(t) {
 function itemHtml(h) {
   return `<div class="item" data-id="${h.id}">${avatar(h.app || KIND[h.kind])}
     <div class="body"><div class="meta"><span class="tag">${KIND[h.kind] || h.kind}</span><span>${esc(h.app || '')}</span><span>${timeOf(h.at)}</span><span class="sp"></span>
-      <span class="acts"><button class="icon-btn" data-act="copy">Copiar</button><button class="icon-btn" data-act="review">Revisar</button><button class="icon-btn" data-act="del">Borrar</button></span></div>
+      <span class="acts"><button class="icon-btn" data-act="copy">Copiar</button>${words(h.text) >= 40 ? '<button class="icon-btn" data-act="sum">Resumir</button>' : ''}<button class="icon-btn" data-act="review">Revisar</button><button class="icon-btn" data-act="del">Borrar</button></span></div>
       <div class="txt">${esc(h.text)}</div>
-      ${h.raw && h.raw !== h.text ? `<div class="raw">Lo que dijiste: ${esc(h.raw)}</div>` : ''}</div></div>`;
+      ${h.raw && h.raw !== h.text ? `<div class="raw">Lo que dijiste: ${esc(h.raw)}</div>` : ''}${summaries.has(h.id) ? summaryHtml(summaries.get(h.id)) : ''}</div></div>`;
 }
 
 // ---------- inicio ----------
@@ -90,17 +90,41 @@ async function renderHome() {
 
 // ---------- historial ----------
 async function renderHistory() {
-  const f = $('histFilter').value.toLowerCase();
-  const hist = (await hablo.getHistory()).filter((h) => !f || h.text.toLowerCase().includes(f) || (h.app || '').toLowerCase().includes(f));
+  const f = $('histFilter').value.toLowerCase(), kind = $('histKind').value;
+  const hist = (await hablo.getHistory()).filter((h) => (!kind || h.kind === kind) && (!f || h.text.toLowerCase().includes(f) || (h.app || '').toLowerCase().includes(f)));
   let last = '', out = '';
   for (const h of hist) { const l = dayLabel(h.at); if (l !== last) { out += `<div class="day">${esc(l)}</div>`; last = l; } out += itemHtml(h); }
   $('histList').innerHTML = out || '<div class="empty">No hay nada que mostrar.</div>';
 }
 $('histFilter').oninput = renderHistory;
+$('histKind').onchange = renderHistory;
+$('exportHist').onclick = async () => { const r = await hablo.exportHistory(); if (r.ok) toast('Historial exportado'); };
+function summaryHtml(x) {
+  const task = (t) => `<li>${esc(t.tarea)}${t.responsable || t.fecha ? ` <span class="muted small">· ${esc([t.responsable, t.fecha].filter(Boolean).join(' · '))}</span>` : ''}</li>`;
+  return `<div class="sum"><b>Resumen</b><p>${esc(x.resumen)}</p>
+    ${x.puntos.length ? `<ul>${x.puntos.map((p) => `<li>${esc(p)}</li>`).join('')}</ul>` : ''}
+    ${x.tareas.length ? `<b>Tareas</b><ul>${x.tareas.map(task).join('')}</ul>` : ''}
+    <button class="icon-btn" data-act="sumcopy">Copiar resumen</button></div>`;
+}
+const sumText = (x) => [x.resumen, ...x.puntos.map((p) => `- ${p}`), ...(x.tareas.length ? ['', 'Tareas:', ...x.tareas.map((t) => `- ${t.tarea}${t.responsable || t.fecha ? ` (${[t.responsable, t.fecha].filter(Boolean).join(', ')})` : ''}`)] : [])].join('\n');
+const summaries = new Map(); // id → resumen, mientras la app está abierta
 document.addEventListener('click', async (e) => {
   const act = e.target.dataset.act; if (!act) return;
   const id = e.target.closest('.item').dataset.id;
   if (act === 'copy') { const h = (await hablo.getHistory()).find((x) => x.id === id); hablo.copy(h.text); toast('Copiado'); }
+  if (act === 'sumcopy') { hablo.copy(sumText(summaries.get(id))); toast('Copiado'); return; }
+  if (act === 'sum') {
+    const body = e.target.closest('.item').querySelector('.body');
+    body.querySelector('.sum')?.remove();
+    e.target.textContent = 'Resumiendo…'; e.target.disabled = true;
+    const h = (await hablo.getHistory()).find((x) => x.id === id);
+    const r = await hablo.summarize(h.text);
+    e.target.textContent = 'Resumir'; e.target.disabled = false;
+    if (!r.ok) { toast(r.error); return; }
+    summaries.set(id, r.result);
+    body.insertAdjacentHTML('beforeend', summaryHtml(r.result));
+    return;
+  }
   if (act === 'review') { const h = (await hablo.getHistory()).find((x) => x.id === id); $('revText').value = h.text; $('revText').oninput(); $('revOut').innerHTML = ''; go('review'); }
   if (act === 'del') { await hablo.deleteHistory(id); renderHistory(); renderHome(); }
 });

@@ -1,5 +1,6 @@
-const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage, nativeTheme, session, clipboard, shell } = require('electron');
+const { app, BrowserWindow, Tray, Menu, ipcMain, screen, nativeImage, nativeTheme, session, clipboard, shell, dialog } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 if (process.env.HABLO_USER_DATA) app.setPath('userData', process.env.HABLO_USER_DATA);
 
@@ -224,6 +225,20 @@ ipcMain.handle('settings:set', (_e, patch) => {
 ipcMain.handle('apikey:set', (_e, key) => { store.setApiKey(key.trim()); return publicSettings(); });
 ipcMain.handle('ai:test', async () => { try { await ai.test(); return { ok: true }; } catch (e) { return { ok: false, error: e.message }; } });
 ipcMain.handle('review:run', async (_e, text) => { try { return { ok: true, result: await ai.review(String(text || '')) }; } catch (e) { return { ok: false, error: e.message }; } });
+ipcMain.handle('summary:run', async (_e, text) => { try { return { ok: true, result: await ai.summarize(String(text || '')) }; } catch (e) { return { ok: false, error: e.message }; } });
+ipcMain.handle('history:export', async () => {
+  const { canceled, filePath } = await dialog.showSaveDialog(mainWin, { defaultPath: 'hablo-historial.md', filters: [{ name: 'Markdown', extensions: ['md'] }] });
+  if (canceled || !filePath) return { ok: false };
+  const KIND = { dictation: 'Dictado', edit: 'Edición', ask: 'Pregunta', translation: 'Traducción' };
+  let day = '', out = '# Historial de Hablo\n';
+  for (const h of store.getHistory()) {
+    const d = new Date(h.at).toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    if (d !== day) { day = d; out += `\n## ${d}\n`; }
+    out += `\n**${new Date(h.at).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })} · ${KIND[h.kind] || h.kind}${h.app ? ` · ${h.app}` : ''}**\n\n${h.text}\n`;
+  }
+  fs.writeFileSync(filePath, out, 'utf8');
+  return { ok: true, path: filePath };
+});
 ipcMain.handle('history:get', () => store.getHistory());
 ipcMain.handle('history:delete', (_e, id) => store.deleteHistory(id));
 ipcMain.handle('history:clear', () => store.clearHistory());
