@@ -1,7 +1,8 @@
 {
   "name": "hablo",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Teclado de voz con IA para escritorio: habla y el texto pulido aparece donde tengas el cursor.",
+  "author": "safesoftwaresolution",
   "main": "main.js",
   "private": true,
   "scripts": {
@@ -26,7 +27,8 @@
     "npmRebuild": false,
     "nsis": {
       "include": "build/installer.nsh"
-    }
+    },
+    "copyright": "Copyright © 2026 safesoftwaresolution"
   },
   "devDependencies": {
     "electron": "^44.9.3",
