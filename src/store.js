@@ -95,10 +95,12 @@ function addHistory(entry) {
   const item = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), at: Date.now(), ...entry };
   history.unshift(item);
   history = history.slice(0, 500);
-  stats.totalWords += countWords(entry.text);
-  stats.totalSessions += 1;
   writeJson('history.json', history);
-  writeJson('stats.json', stats);
+  if (entry.kind !== 'audio') { // los archivos subidos no cuentan como palabras dictadas
+    stats.totalWords += countWords(entry.text);
+    stats.totalSessions += 1;
+    writeJson('stats.json', stats);
+  }
   return item;
 }
 const getHistory = () => history;

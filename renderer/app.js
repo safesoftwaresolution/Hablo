@@ -7,7 +7,7 @@ const PRESETS = {
   openai: { baseUrl: 'https://api.openai.com/v1', sttModel: 'gpt-4o-mini-transcribe', chatModel: 'gpt-4o-mini' },
   groq: { baseUrl: 'https://api.groq.com/openai/v1', sttModel: 'whisper-large-v3-turbo', chatModel: 'llama-3.1-8b-instant' }
 };
-const KIND = { dictation: 'Dictado', edit: 'Edición', ask: 'Pregunta', translation: 'Traducción' };
+const KIND = { dictation: 'Dictado', edit: 'Edición', ask: 'Pregunta', translation: 'Traducción', audio: 'Audio' };
 
 let S, toastT;
 
@@ -69,7 +69,7 @@ async function renderHome() {
   $('trLang').textContent = S.translate.target;
   $('setupHint').hidden = S.hasKey;
   const [hist, st] = await Promise.all([hablo.getHistory(), hablo.getStats()]);
-  const spoken = hist.filter((h) => h.kind !== 'ask');
+  const spoken = hist.filter((h) => h.kind !== 'ask' && h.kind !== 'audio');
   const today = new Date().toDateString();
   const todayWords = spoken.filter((h) => new Date(h.at).toDateString() === today).reduce((n, h) => n + words(h.text), 0);
   const timed = spoken.filter((h) => h.ms > 0);
@@ -129,6 +129,29 @@ document.addEventListener('click', async (e) => {
   if (act === 'del') { await hablo.deleteHistory(id); renderHistory(); renderHome(); }
 });
 $('clearHist').onclick = async () => { if (confirm('¿Borrar todo el historial?')) { await hablo.clearHistory(); renderHistory(); renderHome(); } };
+
+// ---------- audios ----------
+let audioBusy = false;
+async function transcribeFiles(paths) {
+  if (audioBusy) { toast('Espera a que termine la transcripción actual'); return; }
+  go('audio');
+  audioBusy = true;
+  for (const p of paths) {
+    const name = p.split(/[\\/]/).pop();
+    $('audioOut').insertAdjacentHTML('afterbegin', `<div class="card aud pending"><div class="name">${esc(name)}</div><div class="muted small">Transcribiendo…</div></div>`);
+    const card = $('audioOut').firstElementChild;
+    const r = await hablo.transcribeFile(p, $('audioPolish').checked);
+    card.classList.remove('pending');
+    if (!r.ok) { card.innerHTML = `<div class="name">${esc(name)}</div><div class="small" style="color:var(--danger)">${esc(r.error)}</div>`; continue; }
+    card.innerHTML = `<div class="row between"><div class="name">${esc(name)}</div><button class="btn sm" data-copy>Copiar</button></div><div class="txt">${esc(r.text)}</div>`;
+    card.querySelector('[data-copy]').onclick = () => { hablo.copy(r.text); toast('Copiado'); };
+  }
+  audioBusy = false;
+}
+$('audioPick').onclick = async () => { const paths = await hablo.pickAudio(); if (paths.length) transcribeFiles(paths); };
+hablo.onFilesDropped((paths) => { $('audioDrop').classList.remove('over'); transcribeFiles(paths); });
+['dragenter', 'dragover'].forEach((ev) => document.addEventListener(ev, () => $('audioDrop').classList.add('over')));
+['dragleave', 'drop'].forEach((ev) => document.addEventListener(ev, (e) => { if (ev === 'drop' || !e.relatedTarget) $('audioDrop').classList.remove('over'); }));
 
 // ---------- diccionario ----------
 function renderDict() {

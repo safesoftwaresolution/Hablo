@@ -20,6 +20,10 @@ let lastOverlay = null;
 const MIN_MS = 400;   // audio más corto se descarta
 const HOLD_MS = 380;  // más que esto mantenido = pulsar-para-hablar; menos = manos libres
 
+// Formatos que aceptan los endpoints de transcripción compatibles con OpenAI.
+const AUDIO_MIME = { mp3: 'audio/mpeg', m4a: 'audio/mp4', wav: 'audio/wav', ogg: 'audio/ogg', webm: 'audio/webm', flac: 'audio/flac', mp4: 'video/mp4', mpeg: 'audio/mpeg', mpga: 'audio/mpeg' };
+const AUDIO_MAX_BYTES = 25 * 1024 * 1024;
+
 // ---------- ventanas ----------
 function createMain() {
   mainWin = new BrowserWindow({
@@ -226,10 +230,32 @@ ipcMain.handle('apikey:set', (_e, key) => { store.setApiKey(key.trim()); return 
 ipcMain.handle('ai:test', async () => { try { await ai.test(); return { ok: true }; } catch (e) { return { ok: false, error: e.message }; } });
 ipcMain.handle('review:run', async (_e, text) => { try { return { ok: true, result: await ai.review(String(text || '')) }; } catch (e) { return { ok: false, error: e.message }; } });
 ipcMain.handle('summary:run', async (_e, text) => { try { return { ok: true, result: await ai.summarize(String(text || '')) }; } catch (e) { return { ok: false, error: e.message }; } });
+ipcMain.handle('audio:pick', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog(mainWin, {
+    properties: ['openFile', 'multiSelections'],
+    filters: [{ name: 'Audio', extensions: Object.keys(AUDIO_MIME) }]
+  });
+  return canceled ? [] : filePaths;
+});
+ipcMain.handle('audio:transcribe', async (_e, { filePath, polish }) => {
+  const name = path.basename(String(filePath || ''));
+  try {
+    const mime = AUDIO_MIME[path.extname(name).slice(1).toLowerCase()];
+    if (!mime) throw new Error(`Formato no compatible. Usa ${Object.keys(AUDIO_MIME).join(', ')}.`);
+    const size = fs.statSync(filePath).size;
+    if (size > AUDIO_MAX_BYTES) throw new Error(`El archivo pesa ${(size / 1048576).toFixed(1)} MB y el límite del proveedor es ${AUDIO_MAX_BYTES / 1048576} MB. Pártelo o comprímelo.`);
+    const raw = await ai.transcribe(fs.readFileSync(filePath), mime, name);
+    if (!raw) throw new Error('No se detectó voz en el audio.');
+    const text = polish ? await ai.clean(raw, {}) : raw;
+    store.addHistory({ kind: 'audio', raw, text, app: name });
+    mainWin?.webContents.send('data:changed');
+    return { ok: true, name, text };
+  } catch (e) { return { ok: false, name, error: e.message }; }
+});
 ipcMain.handle('history:export', async () => {
   const { canceled, filePath } = await dialog.showSaveDialog(mainWin, { defaultPath: 'hablo-historial.md', filters: [{ name: 'Markdown', extensions: ['md'] }] });
   if (canceled || !filePath) return { ok: false };
-  const KIND = { dictation: 'Dictado', edit: 'Edición', ask: 'Pregunta', translation: 'Traducción' };
+  const KIND = { dictation: 'Dictado', edit: 'Edición', ask: 'Pregunta', translation: 'Traducción', audio: 'Audio' };
   let day = '', out = '# Historial de Hablo\n';
   for (const h of store.getHistory()) {
     const d = new Date(h.at).toLocaleDateString('es', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });

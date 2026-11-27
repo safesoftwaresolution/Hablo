@@ -37,11 +37,12 @@ async function request(url, init) {
   }
 }
 
-async function transcribe(buf, mime) {
+// `filename` es opcional: el proveedor deduce el formato por la extensión, así que los archivos subidos conservan la suya.
+async function transcribe(buf, mime, filename) {
   const { s, key, base } = cfg();
   const form = new FormData();
   const ext = mime.includes('ogg') ? 'ogg' : mime.includes('mp4') ? 'm4a' : 'webm';
-  form.append('file', new Blob([buf], { type: mime }), `audio.${ext}`);
+  form.append('file', new Blob([buf], { type: mime }), filename || `audio.${ext}`);
   form.append('model', s.provider.sttModel);
   form.append('response_format', 'json');
   if (s.language && s.language !== 'auto') form.append('language', s.language);
